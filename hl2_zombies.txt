@@ -1,0 +1,9 @@
+"Gamemode"
+{
+	"base"	"base"
+	"title"	"HL2 Zombies"
+	"maps" "^gm_"
+	"menusystem" "1"
+
+	"Settings"
+}
