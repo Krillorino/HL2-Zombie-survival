@@ -5,3 +5,5 @@ function GM:Initialize()
 end
 
 GM:SetPlayerSpeed(ply, 190, 320)
+
+local this is a test
