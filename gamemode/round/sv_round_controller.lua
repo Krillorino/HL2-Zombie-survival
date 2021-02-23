@@ -1,7 +1,8 @@
-local round_status = 0 --0 = end 1 = active
+local game_status = 0 --0 = end 1 = active
 local activeRound = 1
+local waitingforplayers = true
 
-util.AddNetworkString("UpdateRoundStatus")
+util.AddNetworkString("UpdateGameStatus")
 util.AddNetworkString("UpdateRoundNumber")
 
 
@@ -11,6 +12,8 @@ local secondinterval = 1
 local timerInit = 0
 local round_time = 0
 local round_timer_enabled = false
+
+
 ------------------------
 
 --------------------------------
@@ -31,10 +34,10 @@ local isSpawning = false
 --------------------------------
 -- Update the round to clients -
 --------------------------------
-function updateClientRoundStatus()
+function updateClientGameStatus()
 
-	net.Start("UpdateRoundStatus")
-		net.WriteInt(round_status, 4)
+	net.Start("UpdateGameStatus")
+		net.WriteInt(game_status, 4)
 	net.Broadcast()
 	
 end
@@ -49,9 +52,9 @@ end
 
 --
 
-function beginRound()
+function beginGame()
 
-	round_status = 1
+	game_status = 1
 	isSpawning = true
 	round_timer_enabled = true
 	updateClientRoundStatus()
@@ -60,17 +63,17 @@ end
 
 --
 
-function endRound()
+function endGame()
 
-	round_status = 0
+	game_status = 0
 	updateClientRoundStatus()
 	round_timer_enabled = false
 	
 end
 
-function getRoundStatus()
+function getGameStatus()
 
-	return round_status
+	return game_status
 	
 end
 
@@ -89,6 +92,12 @@ end
 function getRoundTimerEnabled()
 
 	return round_timer_enabled
+
+end
+
+function getWaitingForPlayers()
+
+	return waitingforplayers
 
 end
 --------------------------------
@@ -135,10 +144,42 @@ local spawnPos = Vector(744, -283, -50)
 ---------- Wave system ---------
 --------------------------------
 
+
 local nextWaveWaiting = false
+
+hook.Add("PlayerSpawn", "GameStart", function()
+
+	if waitingforplayers == false and game_status == 0 then
+
+		print("Game is about to begin")
+
+		timer.Create("roundStart", 1, 10, function()
+
+		print( string.ToMinutesSeconds((timer.RepsLeft("roundStart"))) )
+
+		end)
+
+		timer.Simple(11, function()
+		beginRound()
+		end)
+
+	end
+
+end)
+
 
 
 hook.Add("Think", "WaveThink", function()
+
+	if nbply:GetCount() >= 2 then
+
+		waitingforplayers = false
+
+	elseif nbply:GetCount() <= 1 then
+
+		waitingforplayers = true
+
+	end
 
 	--Variable that count the time of the current round--
 
@@ -154,7 +195,7 @@ hook.Add("Think", "WaveThink", function()
 
 	---------------------------------------------------
 
-	if round_status == 1  and isSpawning == true then
+	if game_status == 1  and isSpawning == true then
 		
 		nextWaveWaiting = false
 
@@ -181,7 +222,7 @@ hook.Add("Think", "WaveThink", function()
 
 	end
 	
-	if round_status == 1 and isSpawning == false and table.Count(ents.FindByClass("npc_*")) == 0 and nextWaveWaiting == false then
+	if game_status == 1 and isSpawning == false and table.Count(ents.FindByClass("npc_*")) == 0 and nextWaveWaiting == false then
 
 		activeRound = activeRound + 1
 		nextWaveWaiting = true

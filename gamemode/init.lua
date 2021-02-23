@@ -12,6 +12,9 @@ AddCSLuaFile("round/cl_round_controller.lua")
 resource.AddWorkshop(1761820193) -- Pickup History
 resource.AddWorkshop(1758584347) -- HEV MK V
 
+-- Variable init --
+
+nbply = RecipientFilter() -- Count the number of players
 
 function GM:PlayerConnect(name , ip)
 
@@ -31,6 +34,21 @@ function GM:PlayerSpawn(ply)
 	ply:SetRunSpeed(290)
 	ply:SetWalkSpeed(160)
 	ply:Give("weapon_ar2")
+	nbply:AddAllPlayers()
+
+end
+
+function GM:Disconnect(ply)
+
+	nbply:AddAllPlayers()
+
+end
+
+-- Return the amount of players connected
+
+function getNbPly()
+
+	print(nbply:GetCount())
 
 end
 

@@ -1,8 +1,8 @@
-local round_status = 0
+local game_status = 0
 
-net.Receive("UpdateRoundStatus", function(len)
+net.Receive("UpdateGameStatus", function(len)
 
-	round_status = net.ReadInt(4)
+	game_status = net.ReadInt(4)
 	
 end)
 
@@ -12,9 +12,9 @@ net.Receive("UpdateRoundNumber", function(len)
 	
 end)
 
-function getRoundStatus()
+function getGameStatus()
 
-	return round_status()
+	return game_status()
 	
 end
 
