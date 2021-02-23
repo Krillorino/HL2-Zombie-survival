@@ -2,24 +2,21 @@ include("shared.lua")
 
 --Other scripts
 
-local camera_swap = 0
+local thirdperson_stage = 0
 
 function GM:PlayerBindPress(pl, bind, pressed)
     if pressed and string.find(bind, "+menu_context") then
-        if camera_swap == 0 then
+        if thirdperson_stage == 0 then
             RunConsoleCommand("thirdperson_ots")
-            camera_swap = 1
-        else
+            thirdperson_stage = 1
+        elseif thirdperson_stage == 1 then
             RunConsoleCommand("thirdperson_ots_swap")
-            camera_swap = 0
+            thirdperson_stage = 2
+        elseif thirdperson_stage == 2 then
+            RunConsoleCommand("thirdperson_ots_swap")
+            RunConsoleCommand("thirdperson_ots")
+            thirdperson_stage = 0
         end
     end
 end
-
-
-hook.Add( "PlayerSpawn", "SetFOV", function()
-
-	RunConsoleCommand("viewmodel_fov 85")
-
-end)
 

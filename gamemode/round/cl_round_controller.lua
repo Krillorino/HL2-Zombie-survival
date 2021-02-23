@@ -6,8 +6,21 @@ net.Receive("UpdateRoundStatus", function(len)
 	
 end)
 
+net.Receive("UpdateRoundNumber", function(len)
+
+	activeRound = net.ReadInt(4)
+	
+end)
+
 function getRoundStatus()
 
 	return round_status()
+	
+end
+
+
+function getRoundNumber()
+
+	return activeRound()
 	
 end
