@@ -14,7 +14,7 @@ resource.AddWorkshop(1758584347) -- HEV MK V
 
 -- Variable init --
 
-nbply = RecipientFilter() -- Count the number of players
+nbply = RecipientFilter() -- Filter only the number of players
 
 function GM:PlayerConnect(name , ip)
 

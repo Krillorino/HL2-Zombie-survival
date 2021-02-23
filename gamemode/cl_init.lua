@@ -1,4 +1,5 @@
 include("shared.lua")
+include("round/cl_round_controller.lua")
 
 --Other scripts
 
