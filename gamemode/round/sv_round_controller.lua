@@ -11,9 +11,9 @@ util.AddNetworkString("UpdateGameStartTime")
 --Round information variables
 --------------------------
 
-local game_status = 0 --0 = end 1 = active
+game_status = 0 --0 = end 1 = active
 local activeRound = 1
-local nextWaveWaiting = false
+nextWaveWaiting = false
 local waitingforplayers = true
 
 --------------------------
@@ -132,6 +132,11 @@ function getGameStartTime()
 	return (string.ToMinutesSeconds(timer.RepsLeft("gamestarttime")))
 end
 
+function getNextWaveWaiting()
+
+	return nextWaveWaiting
+
+end
 --------------------------------
 ----------Spawn system----------
 --------------------------------
@@ -268,9 +273,10 @@ hook.Add("Think", "WaveThink", function()
 
 		round_time = round_time - round_time
 		round_timer_enabled = false
+		RespawnSpectators()
 
 	-- Set a break of 10 seconds before the next round
-		timer.Simple(10,function()
+		timer.Simple(30,function()
 			zombieCount = 5 * activeRound
 			isSpawning = true
 			round_timer_enabled = true

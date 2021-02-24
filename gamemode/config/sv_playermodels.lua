@@ -1,3 +1,7 @@
+--------------------------------
+-- Player default playermodel --
+--------------------------------
+
 local rebelplayermodel = {
 "models/player/Group03/female_01.mdl",
 "models/player/Group03/female_02.mdl",
