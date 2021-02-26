@@ -6,6 +6,6 @@ function GM:Initialize()
 
 end
 
-team.SetUp(0, Player, Color(0,0,250))
+--team.SetUp(0, Alive, Color(255,198,82))
 
-team.SetUp(1, Spectator, Color(0,0,0))
+--team.SetUp(1, Spectator, Color(0,0,0))

@@ -12,13 +12,16 @@ util.AddNetworkString("UpdateGameStartTime")
 --------------------------
 
 game_status = 0 --0 = end 1 = active
-local activeRound = 1
 nextWaveWaiting = false
+
+local activeRound = 1
 local waitingforplayers = true
 
 --------------------------
---Round timer variables--
+-----Round variables------
 --------------------------
+local gamestarting = false -- a variable used to avoid repetition when a player spawn at the gamestarttime hook
+local gamelost = false
 
 local secondinterval = 1
 local timerInit = 0
@@ -35,7 +38,11 @@ local t = 0
 local interval = 2
 
 -- number of zombie spawned in a wave
-local zombieCount = 5
+
+local setMaxZombieCount = 1
+
+-- dont touch this
+local zombieCount = 0
 
 -- is it spawning zombie?
 local isSpawning = false
@@ -76,21 +83,87 @@ end
 -- Serverside Utility functions
 --------------------------------
 
+-- Called when there is enough player, the game will automatically start
+
+function GameStart()
+
+	if waitingforplayers == false and game_status == 0 and gamestarting == false and gamelost == false then
+
+		gamestarting = true
+
+		updateClientWaitingForPlayers()
+		print("Game is about to begin")
+
+		timer.Create("gamestarttime", 1, 10, function()
+
+			print( string.ToMinutesSeconds((timer.RepsLeft("gamestarttime"))) )
+			updateClientGameStartTime()
+
+		end)
+
+		timer.Simple(11, function()
+
+			beginGame()
+
+		end)
+
+	end
+
+end
+
+function GameLost()
+
+if gamelost == false and game_status == 1 and waitingforplayers == false then
+ 
+ 		gamelost = true
+
+		print("Game lost, restarting the game")
+		timer.Create("gamerestarttime", 1, 10, function()
+
+			print( string.ToMinutesSeconds((timer.RepsLeft("gamerestarttime"))) )
+
+--			We will need an update for clients for the new timer
+
+		end)
+
+		timer.Simple(11, function()
+
+			game.CleanUpMap()
+			endGame()
+
+		end)
+
+end
+
+end
+
 function beginGame()
 
 	game_status = 1
-	isSpawning = true
-	round_timer_enabled = true
 	updateClientGameStatus()
+
+	gamelost = false
+	gamestarting = false
+
+	zombieCount = setMaxZombieCount
+	isSpawning = true
+
+	round_timer_enabled = true
 
 end
 
 
 function endGame()
 
-	game_status = 0
 	updateClientGameStatus()
+
+	game_status = 0
+	gamestarting = false
+	gamelost = false
+	restartgame = false
+
 	round_timer_enabled = false
+	activeRound = activeRound - activeRound
 	
 end
 
@@ -137,6 +210,13 @@ function getNextWaveWaiting()
 	return nextWaveWaiting
 
 end
+
+function getGameStarting()
+
+	return gamestarting
+
+end
+
 --------------------------------
 ----------Spawn system----------
 --------------------------------
@@ -145,7 +225,7 @@ end
 -- you can show the pos by typing cl_showpos 1 in console
 
 --Vector pos from gm construct
-local spawnPos = Vector(744, -283, -50)
+local spawnPos = Vector(-38.879505, 2448.411133, 64.254677)
 
 --		
 --		function getBestSpawn()
@@ -181,41 +261,17 @@ local spawnPos = Vector(744, -283, -50)
 ---------- Wave system ---------
 --------------------------------
 
--- Refresh everytime a playerspawn if the game should begin
-
-hook.Add("PlayerSpawn", "GameStartTime", function()
-
-	if waitingforplayers == false and game_status == 0 then
-
-		updateClientWaitingForPlayers()
-		print("Game is about to begin")
-
-		timer.Create("gamestarttime", 1, 10, function()
-
-		print( string.ToMinutesSeconds((timer.RepsLeft("gamestarttime"))) )
-		updateClientGameStartTime()
-		end)
-
-		timer.Simple(11, function()
-		beginGame()
-		end)
-
-	end
-
-end)
-
-
-
 hook.Add("Think", "WaveThink", function()
 
 	-- Wait for a certain amount of players to join before calling the starting game function
 
-	if nbply:GetCount() >= 2 then
+	if table.Count(player.GetAll()) >= 2 and gamestarting == false then
 
 		waitingforplayers = false
+		GameStart()
 
 
-	elseif nbply:GetCount() <= 1 then
+	elseif table.Count(player.GetAll()) <= 1 then
 
 		waitingforplayers = true
 		updateClientWaitingForPlayers()
@@ -234,8 +290,18 @@ hook.Add("Think", "WaveThink", function()
 		end
 	end
 
+	-- When every players are dead
+	-- the gamelost variable is used so when the function is called it is set to true and it avoids the GameLost() to get spammed every frame
+
+	if ( table.Count(deadplayernumbers) == table.Count(player.GetAll()) and game_status == 1 and nextWaveWaiting == false and gamelost == false ) then
+		
+		GameLost()
+
+	end
+
 	---------------------------------------------------
 
+-- When the game is active and zombie spawning then
 --Zombie spawning with interval and stop when it reached the maximum set
 
 	if game_status == 1  and isSpawning == true then
@@ -264,6 +330,7 @@ hook.Add("Think", "WaveThink", function()
 
 	end
 	
+	-- When the game is active and there is no more zombies spawning after they all died then we call a break of 30 seconds
 	-- Stop spawning zombies when it reach the maximum from the variable
 
 	if game_status == 1 and isSpawning == false and table.Count(ents.FindByClass("npc_*")) == 0 and nextWaveWaiting == false then
@@ -273,14 +340,14 @@ hook.Add("Think", "WaveThink", function()
 
 		round_time = round_time - round_time
 		round_timer_enabled = false
-		RespawnSpectators()
 
-	-- Set a break of 10 seconds before the next round
+	-- Set a break of 30 seconds before the next round
 		timer.Simple(30,function()
 			zombieCount = 5 * activeRound
 			isSpawning = true
 			round_timer_enabled = true
 		end)
 	end
+
 end)
 
